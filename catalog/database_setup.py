@@ -39,6 +39,11 @@ class MenuItem(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(80), nullable=False)
+    ingredients = Column(String(500),nullable=False)
+    image_url = Column(String(1000),nullable=False)
+    description = Column(String(1000),nullable=False)
+    itemtype = Column(String(100),nullable=False)
+    link = Column(String(500),nullable=False)
     state_id = Column(Integer, ForeignKey('states.id'))
     state = relationship("States",
                          backref=backref("items", cascade="all,delete-orphan"))
@@ -50,8 +55,13 @@ class MenuItem(Base):
         return {
             'id': self.id,
             'name': self.name,
-            }
-engine = create_engine('sqlite:///projectdatabase.db')
+            'ingredients' : self.ingredients,
+            'image_url' : self.image_url,
+            'description' : self.description,
+            'Type' : self.Type,
+            'link' : self.link,
 
+            }
+engine = create_engine('postgresql://catalog:catalog@localhost/catalog')
 
 Base.metadata.create_all(engine)
