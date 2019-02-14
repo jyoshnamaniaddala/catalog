@@ -17,7 +17,7 @@ app = Flask(__name__)
 CLIENT_ID = json.loads(open('client_secrets.json', 'r').
                        read())['web']['client_id']
 APPLICATION_NAME = "foods of india"
-engine = create_engine('sqlite:///projectdatabase.db',
+engine = create_engine('postgresql://catalog:catalog@localhost/catalog',
                        connect_args={'check_same_thread': False}, echo=True)
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
@@ -29,7 +29,7 @@ session = DBSession()
 def showLogin():
     state = ''. join(random .choice(string .
                      ascii_uppercase + string . digits)
-                     for x in xrange(32))
+                     for x in range(32))
     login_session['state'] = state
     return render_template('loginpage.html', STATE=state)
 
@@ -43,7 +43,7 @@ def gconnect():
         return response
     code = request.data
     try:
-        oauth_flow = flow_from_clientsecrets('client_secrets.json', scope='')
+        oauth_flow = flow_from_clientsecrets('catalog/catalog/client_secrets.json', scope='')
         oauth_flow.redirect_uri = 'postmessage'
         credentials = oauth_flow.step2_exchange(code)
     except FlowExchangeError:
@@ -169,7 +169,7 @@ def stateMenu():
     return render_template("mainpage.html", states=states)
 
 
-# Showing state menu items in json file
+# Showing state S menu items in json file
 @app.route('/state/<int:state_id>/JSON')
 def stateJSON(state_id):
     state = session.query(States).filter_by(id=state_id).all()
@@ -177,11 +177,10 @@ def stateJSON(state_id):
     return jsonify(Items=[i.serialize for i in menuitem])
 
 
-# Showing particular menu item in state
 @app.route('/state/<int:state_id>/menu/<int:menu_id>/JSON')
-def menuItemJSON(state_id, menu_id):
-    menuitem = session.query(MenuItem).filter_by(id=menu_id).one()
-    return jsonify(MenuItem=menuitem.serialize)
+def menuItemJSON(state_id,menu_id):
+    menuitem=session.query(MenuItem).filter_by(id=menu_id).one()
+    return jsonify(MenuItem =menuitem.serialize)
 
 
 # To show states names after login
@@ -270,6 +269,13 @@ def stateDishes(state_id):
     return render_template("menu.html", state=state, items=items)
 
 
+@app.route('/state/<int:state_id>/<int:menu_id>/menu/')
+@login_check
+def menupage(state_id,menu_id):
+     #state = session.query(States).filter_by(id=state_id).one()
+     items = session.query(MenuItem).filter_by(id=menu_id).one()
+     return render_template("menudisplay.html",state_id=state_id,menu_id=menu_id,items=items)
+
 # Add new menu item(authenticated person only)
 @app.route('/state/<int:state_id>/new/', methods=['GET', 'POST'])
 @login_check
@@ -279,9 +285,10 @@ def newMenuItem(state_id):
     if 'username' in login_session:
         if login_session['user_id'] == state.user_id:
             if request.method == 'POST':
-                newItem = MenuItem(name=request.form['name'],
-                                   state_id=state_id,
-                                   user_id=login_session['user_id'])
+                newItem = MenuItem(name=request.form['name'],ingredients=request.form['ingredients'],
+                                   image_url=request.form['image_url'],description=request.form['description'],
+                                   itemtype=request.form['itemtype'],link=request.form['link'],
+                                   state_id=state_id,user_id=login_session['user_id'])
                 session.add(newItem)
                 session.commit()
                 flash("new item created")
@@ -294,7 +301,6 @@ def newMenuItem(state_id):
             return redirect(url_for('stateDishes', state_id=state_id))
     else:
         return redirect('/login')
-
 
 # To edit menu item(authenticated person only)
 @app.route('/state/<int:state_id>/<int:menu_id>/edit/',
