@@ -14,7 +14,7 @@ import string
 from functools import wraps
 from database_setup import User, States, Base, MenuItem
 app = Flask(__name__)
-CLIENT_ID = json.loads(open('client_secrets.json', 'r').
+CLIENT_ID = json.loads(open('/catalog/catalog/client_secrets.json', 'r').
                        read())['web']['client_id']
 APPLICATION_NAME = "foods of india"
 engine = create_engine('postgresql://catalog:catalog@localhost/catalog',
@@ -43,7 +43,7 @@ def gconnect():
         return response
     code = request.data
     try:
-        oauth_flow = flow_from_clientsecrets('catalog/catalog/client_secrets.json', scope='')
+        oauth_flow = flow_from_clientsecrets('/catalog/catalog/client_secrets.json', scope='')
         oauth_flow.redirect_uri = 'postmessage'
         credentials = oauth_flow.step2_exchange(code)
     except FlowExchangeError:
@@ -76,7 +76,7 @@ def gconnect():
         response = make_response(json.
                                  dumps("""Token's client ID
                                           does not match app's"""), 401)
-        print "Token's client ID does not match app's"
+        print("Token's client ID does not match app's")
         response.headers['Content-Type'] = 'application/json'
         return response
     stored_access_token = login_session.get('access_token')
